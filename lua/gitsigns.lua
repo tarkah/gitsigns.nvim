@@ -28,7 +28,7 @@ local api = vim.api
 local uv = vim.loop
 local current_buf = api.nvim_get_current_buf
 
-local M = {}
+local M = {GitContext = {}, }
 
 
 
@@ -36,7 +36,24 @@ local M = {}
 
 
 
+<<<<<<< HEAD
 function M.detach_all()
+=======
+
+
+
+
+
+
+
+
+
+
+local GitContext = M.GitContext
+
+
+M.detach_all = function()
+>>>>>>> 3e0576a (feat: Enable `attach()` to work with any buffer when given context data.)
    for k, _ in pairs(cache) do
       M.detach(k)
    end
@@ -186,7 +203,7 @@ end
 
 
 
-local attach_throttled = throttle_by_id(function(cbuf, aucmd)
+local attach_throttled = throttle_by_id(function(cbuf, ctx, aucmd)
    local __FUNC__ = 'attach'
    if vimgrep_running then
       dprint('attaching is disabled')
@@ -209,33 +226,48 @@ local attach_throttled = throttle_by_id(function(cbuf, aucmd)
       return
    end
 
-   if api.nvim_buf_line_count(cbuf) > config.max_file_length then
-      dprint('Exceeds max_file_length')
-      return
-   end
-
-   if vim.bo[cbuf].buftype ~= '' then
-      dprint('Non-normal buffer')
-      return
-   end
-
-   local file, commit = get_buf_path(cbuf)
    local encoding = vim.bo[cbuf].fileencoding
+<<<<<<< HEAD
    if encoding == '' then
       encoding = 'utf-8'
    end
+=======
+   local file
+   local commit
+   local gitdir_oap
+   local toplevel_oap
+>>>>>>> 3e0576a (feat: Enable `attach()` to work with any buffer when given context data.)
 
-   local file_dir = util.dirname(file)
+   if ctx then
+      gitdir_oap = ctx.gitdir
+      toplevel_oap = ctx.toplevel
+      file = ctx.toplevel .. util.path_sep .. ctx.file
+      commit = ctx.commit
+   else
+      if api.nvim_buf_line_count(cbuf) > config.max_file_length then
+         dprint('Exceeds max_file_length')
+         return
+      end
 
-   if not file_dir or not util.path_exists(file_dir) then
-      dprint('Not a path')
-      return
+      if vim.bo[cbuf].buftype ~= '' then
+         dprint('Non-normal buffer')
+         return
+      end
+
+      file, commit = get_buf_path(cbuf)
+      local file_dir = util.dirname(file)
+
+      if not file_dir or not util.path_exists(file_dir) then
+         dprint('Not a path')
+         return
+      end
+
+      gitdir_oap, toplevel_oap = on_attach_pre(cbuf)
    end
 
-   local gitdir_oap, toplevel_oap = on_attach_pre(cbuf)
    local git_obj = git.Obj.new(file, encoding, gitdir_oap, toplevel_oap)
 
-   if not git_obj then
+   if not git_obj and not ctx then
       git_obj = try_worktrees(cbuf, file, encoding)
       scheduler()
    end
@@ -258,7 +290,7 @@ local attach_throttled = throttle_by_id(function(cbuf, aucmd)
       return
    end
 
-   if not util.path_exists(file) or uv.fs_stat(file).type == 'directory' then
+   if not ctx and (not util.path_exists(file) or uv.fs_stat(file).type == 'directory') then
       dprint('Not a file')
       return
    end
@@ -283,7 +315,7 @@ local attach_throttled = throttle_by_id(function(cbuf, aucmd)
    end
 
    cache[cbuf] = CacheEntry.new({
-      base = config.base,
+      base = ctx and ctx.base or config.base,
       file = file,
       commit = commit,
       gitdir_watcher = manager.watch_gitdir(cbuf, repo.gitdir),
@@ -318,8 +350,23 @@ end)
 
 
 
-M.attach = void(function(bufnr, _trigger)
-   attach_throttled(bufnr or current_buf(), _trigger)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+M.attach = void(function(bufnr, ctx, _trigger)
+   attach_throttled(bufnr or current_buf(), ctx, _trigger)
 end)
 
 local function setup_cli()
@@ -414,7 +461,7 @@ M.setup = void(function(cfg)
    for _, buf in ipairs(api.nvim_list_bufs()) do
       if api.nvim_buf_is_loaded(buf) and
          api.nvim_buf_get_name(buf) ~= '' then
-         M.attach(buf, 'setup')
+         M.attach(buf, nil, 'setup')
          scheduler()
       end
    end
@@ -423,9 +470,9 @@ M.setup = void(function(cfg)
 
    autocmd('VimLeavePre', M.detach_all)
    autocmd('ColorScheme', hl.setup_highlights)
-   autocmd('BufRead', wrap_func(M.attach, nil, 'BufRead'))
-   autocmd('BufNewFile', wrap_func(M.attach, nil, 'BufNewFile'))
-   autocmd('BufWritePost', wrap_func(M.attach, nil, 'BufWritePost'))
+   autocmd('BufRead', wrap_func(M.attach, nil, nil, 'BufRead'))
+   autocmd('BufNewFile', wrap_func(M.attach, nil, nil, 'BufNewFile'))
+   autocmd('BufWritePost', wrap_func(M.attach, nil, nil, 'BufWritePost'))
 
    autocmd('OptionSet', {
       pattern = 'fileformat',

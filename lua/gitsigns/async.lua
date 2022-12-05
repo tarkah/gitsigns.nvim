@@ -17,9 +17,12 @@
 
 
 
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> 3e0576a (feat: Enable `attach()` to work with any buffer when given context data.)
 local M = {}
 
 
