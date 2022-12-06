@@ -36,9 +36,6 @@ local M = {GitContext = {}, }
 
 
 
-<<<<<<< HEAD
-function M.detach_all()
-=======
 
 
 
@@ -52,8 +49,7 @@ function M.detach_all()
 local GitContext = M.GitContext
 
 
-M.detach_all = function()
->>>>>>> 3e0576a (feat: Enable `attach()` to work with any buffer when given context data.)
+function M.detach_all()
    for k, _ in pairs(cache) do
       M.detach(k)
    end
@@ -227,16 +223,14 @@ local attach_throttled = throttle_by_id(function(cbuf, ctx, aucmd)
    end
 
    local encoding = vim.bo[cbuf].fileencoding
-<<<<<<< HEAD
    if encoding == '' then
       encoding = 'utf-8'
    end
-=======
+
    local file
    local commit
    local gitdir_oap
    local toplevel_oap
->>>>>>> 3e0576a (feat: Enable `attach()` to work with any buffer when given context data.)
 
    if ctx then
       gitdir_oap = ctx.gitdir

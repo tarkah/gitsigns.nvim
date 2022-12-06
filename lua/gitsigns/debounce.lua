@@ -10,12 +10,6 @@ local M = {}
 
 
 
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> 3e0576a (feat: Enable `attach()` to work with any buffer when given context data.)
 function M.debounce_trailing(ms, fn)
    local timer = uv.new_timer(true)
    return function(...)
